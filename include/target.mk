@@ -152,8 +152,8 @@ GENERIC_PATCH_DIR := $(GENERIC_PLATFORM_DIR)/pending$(if $(wildcard $(GENERIC_PL
 GENERIC_HACK_DIR := $(GENERIC_PLATFORM_DIR)/hack$(if $(wildcard $(GENERIC_PLATFORM_DIR)/hack-$(KERNEL_PATCHVER)),-$(KERNEL_PATCHVER))
 GENERIC_FILES_DIR := $(foreach dir,$(wildcard $(GENERIC_PLATFORM_DIR)/files $(GENERIC_PLATFORM_DIR)/files-$(KERNEL_PATCHVER)),"$(dir)")
 
-__config_name_list = $(1)/config-$(KERNEL_PATCHVER) $(1)/config-default
-__config_list = $(firstword $(wildcard $(call __config_name_list,$(1))))
+__config_name_list = $(1)/$(2)config-$(KERNEL_PATCHVER) $(1)/$(2)config-default
+__config_list = $(firstword $(wildcard $(call __config_name_list,$(1),$(2))))
 find_kernel_config=$(if $(__config_list),$(__config_list),$(lastword $(__config_name_list)))
 
 GENERIC_LINUX_CONFIG = $(call find_kernel_config,$(GENERIC_PLATFORM_DIR))
@@ -161,9 +161,10 @@ LINUX_TARGET_CONFIG = $(call find_kernel_config,$(PLATFORM_DIR))
 ifneq ($(PLATFORM_DIR),$(PLATFORM_SUBDIR))
   LINUX_SUBTARGET_CONFIG = $(call find_kernel_config,$(PLATFORM_SUBDIR))
 endif
+LINUX_PROFILE_CONFIG = $(call find_kernel_config,$(PLATFORM_DIR),$(subst DEVICE_,,$(PROFILE:TARGET_%=%))-)
 
 # config file list used for compiling
-LINUX_KCONFIG_LIST = $(wildcard $(GENERIC_LINUX_CONFIG) $(LINUX_TARGET_CONFIG) $(LINUX_SUBTARGET_CONFIG) $(TOPDIR)/env/kernel-config)
+LINUX_KCONFIG_LIST = $(wildcard $(GENERIC_LINUX_CONFIG) $(LINUX_TARGET_CONFIG) $(LINUX_SUBTARGET_CONFIG) $(LINUX_PROFILE_CONFIG) $(TOPDIR)/env/kernel-config)
 
 # default config list for reconfiguring
 # defaults to subtarget if subtarget exists and target does not
