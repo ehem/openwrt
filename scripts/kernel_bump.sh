@@ -102,19 +102,6 @@ init()
 
 bump_kernel()
 {
-	if [ -z "${platform_name}" ] || \
-	   [ -d "${PWD}/image" ]; then
-		platform_name="${PWD}"
-	fi
-	platform_name="${platform_name##*'/'}"
-
-	_target_dir="${src_dir}/../target/linux/${platform_name}"
-
-	if [ ! -d "${_target_dir}/image" ]; then
-		e_err "Cannot find target linux directory '${_target_dir:-not defined}'. Not in a platform directory, or -p not set."
-		exit 1
-	fi
-
 	git switch --force-create '__openwrt_kernel_files_mover'
 
 	if [ "${config_only:-false}" != 'true' ]; then
@@ -248,6 +235,19 @@ main()
 		e_err "Source (${source_version:-missing source version}) and target (${target_version:-missing target version}) versions need to be defined."
 		echo
 		usage
+		exit 1
+	fi
+
+	if [ -z "${platform_name}" ] || \
+	   [ -d "${PWD}/image" ]; then
+		platform_name="${PWD}"
+	fi
+	platform_name="${platform_name##*'/'}"
+
+	_target_dir="${src_dir}/../target/linux/${platform_name}"
+
+	if [ ! -d "${_target_dir}/image" ]; then
+		e_err "Cannot find target linux directory '${_target_dir:-not defined}'. Not in a platform directory, or -p not set."
 		exit 1
 	fi
 
