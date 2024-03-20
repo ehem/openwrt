@@ -106,14 +106,14 @@ bump_kernel()
 
 	if [ "${config_only:-false}" != 'true' ]; then
 		for _path in $(git ls-tree -d -r --name-only '__openwrt_kernel_files_mover' "${_target_dir}" |
-			       sed -n "s|^\(.*-${source_version}\).*|\1|p" |
+			       sed -n "s|^\(.*${source_version}\).*|\1|p" |
 			       sort -u); do
 			if [ ! -e "${_path}" ] || \
-			   [ "${_path}" = "${_path%%"-${source_version}"}" ]; then
+			   [ "${_path}" = "${_path%%"${source_version}"}" ]; then
 				continue
 			fi
 
-			_target_path="${_path%%"-${source_version}"}-${target_version}"
+			_target_path="${_path%%"${source_version}"}${target_version}"
 			if [ -e "${_target_path}" ]; then
 				e_err "Target '${_target_path}' already exists!"
 				exit 1
@@ -126,34 +126,34 @@ bump_kernel()
 	fi
 
 	for _config in $(git ls-files "${_target_dir}" |
-	                 sed -n "s|^\(.*config-${source_version}\).*|\1|p" |
+	                 sed -n "s|^\(.*config${source_version}\).*|\1|p" |
 	                 sort -u); do
 		if [ ! -e "${_config}" ]; then
 			continue
 		fi
 
-		_subtarget="${_config%%"/config-${source_version}"}"
+		_subtarget="${_config%%"/config${source_version}"}"
 		if [ -n "${subtarget_names:-}" ]; then
 			echo "${subtarget_names:-}" | while IFS=',' read -r _subtarget_name; do
 				if [ "${_subtarget_name}" = "${_subtarget##*'/'}" ]; then
-					git mv "${_config}" "${_subtarget}/config-${target_version}"
+					git mv "${_config}" "${_subtarget}/config${target_version}"
 				fi
 			done
 		else
-			git mv "${_config}" "${_subtarget}/config-${target_version}"
+			git mv "${_config}" "${_subtarget}/config${target_version}"
 		fi
 	done
 
 	git commit \
 		--signoff \
-		--message "kernel/${platform_name}: Create kernel files for v${target_version} (from v${source_version})" \
+		--message "kernel/${platform_name}: Create kernel files for v${target_version#-} (from v${source_version#-})" \
 		--message 'This is an automatically generated commit.' \
 		--message 'When doing `git bisect`, consider `git bisect --skip`.'
 
 	git checkout 'HEAD~' "${_target_dir}"
 	git commit \
 		--signoff \
-		--message "kernel/${platform_name}: Restore kernel files for v${source_version}" \
+		--message "kernel/${platform_name}: Restore kernel files for v${source_version#-}" \
 		--message "$(printf "This is an automatically generated commit which aids following Kernel patch\nhistory, as git will see the move and copy as a rename thus defeating the\npurpose.\n\nFor the original discussion see:\nhttps://lists.openwrt.org/pipermail/openwrt-devel/2023-October/041673.html")"
 	git switch "${initial_branch:?Unable to switch back to original branch. Quitting.}"
 	GIT_EDITOR=true git merge --no-ff '__openwrt_kernel_files_mover'
@@ -254,6 +254,10 @@ main()
 	check_requirements
 
 	init
+
+	source_version="-$source_version"
+	target_version="-$target_version"
+
 	bump_kernel
 	cleanup
 }
