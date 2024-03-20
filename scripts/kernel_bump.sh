@@ -101,6 +101,11 @@ main()
 	source_version="-$source_version"
 	target_version="-$target_version"
 
+	if [ -n "${config_only:-}" ]; then
+		source_version="/config$source_version"
+		target_version="/config$target_version"
+	fi
+
 	exec "${0%${0##*/}}kernel_upgrade.pl" "$source_version" "$target_version" "$platform_name"
 }
 
