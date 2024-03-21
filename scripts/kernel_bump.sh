@@ -106,7 +106,16 @@ main()
 		target_version="/config$target_version"
 	fi
 
-	exec "${0%${0##*/}}kernel_upgrade.pl" "$source_version" "$target_version" "$platform_name"
+	if [ -z "${subtarget_names:-}" ]; then
+		set "$platform_name"
+	else
+		IFS=,
+		for arg in $subtarget_names; do
+			set -- "$@" "$platform_name/$arg"
+		done
+	fi
+
+	exec "${0%${0##*/}}kernel_upgrade.pl" "$source_version" "$target_version" "$@"
 }
 
 main "${@}"
